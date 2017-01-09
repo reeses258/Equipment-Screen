@@ -547,7 +547,7 @@ namespace WRS
             int rows = Mathf.CeilToInt( storageList.Count() / ( columns != 0 ? columns : 1 ) );
 
             Rect currentBox = new Rect();
-            Rect scrollingRect = new Rect( 5, 5, storage.width - 21f, height * rows + 60f + 500f );
+            Rect scrollingRect = new Rect( 5, 5, storage.width - 21f, ( height * rows < storage.height ? storage.height + 50f : height * rows ) );
 
             Log.Message( " rec " + scrollingRect.height + " rows: " + rows );
             Widgets.BeginScrollView( storage, ref scrollPosition, scrollingRect );
