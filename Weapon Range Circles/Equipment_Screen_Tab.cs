@@ -309,13 +309,13 @@ namespace WRS
 
         public void PrintThingIcons( Rect rect, List< Thing > thingList )
         {
-            float x = rect.x;
+            float xLoc = rect.x;
             float size = 20f;
 
             foreach( var item in thingList )
             {
-                Widgets.ThingIcon( new Rect( x, rect.y, size, size ), item, 1f );
-                x += size + 1;
+                Widgets.ThingIcon( new Rect( xLoc, rect.y, size, size ), item, 1f );
+                xLoc += size + 1;
             }
         }
 
@@ -395,8 +395,8 @@ namespace WRS
                         tmp.Electric = Mathf.Clamp01( curApparel.GetStatValue( StatDefOf.ArmorRating_Electric, true ) );
                         tmp.Armor.Add( curApparel );
 
-                        individualParts.Add(new Pair<BodyPartGroupDef, ArmorValues>(part, tmp));
-                        if ( isProjected && ApparelUtility.CanWearTogether( curApparel.def, ProjectedItem.def ) )
+                        individualParts.Add( new Pair<BodyPartGroupDef, ArmorValues>( part, tmp ) );
+                        if( isProjected && ApparelUtility.CanWearTogether( curApparel.def, ProjectedItem.def ) )
                             individualPartsProjected.Add( new Pair<BodyPartGroupDef, ArmorValues>( part, tmp ) );
                         else
                             individualPartsProjected.Add( new Pair<BodyPartGroupDef, ArmorValues>( part, new ArmorValues( curApparel ) ) );
@@ -480,7 +480,7 @@ namespace WRS
                 {
                     Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 3, LabelSpacing ), "Heat" );
                     PrintActiveStat( PrintRectActiveDefensive(), individualParts[ i ].Second.Heat, true );
-                    PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
+                    //PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
                     PrintProjectedStat( PrintRectProjDefensive(), individualParts[ i ].Second.Heat, individualPartsProjected[ i ].Second.Heat, false, true );
                     y += LabelSpacing;
                 }
@@ -495,7 +495,7 @@ namespace WRS
                 {
                     Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 3, LabelSpacing ), "Electric" );
                     PrintActiveStat( PrintRectActiveDefensive(), individualParts[ i ].Second.Electric, true );
-                    PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
+                    //PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
                     PrintProjectedStat( PrintRectProjDefensive(), individualParts[ i ].Second.Electric, individualPartsProjected[ i ].Second.Electric, false, true );
                     y += LabelSpacing;
                 }
