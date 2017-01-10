@@ -13,7 +13,8 @@ namespace WRS
         public ArmorValues( Thing t )
         {
             Armor = new List<Thing>();
-            Armor.Add( t );
+            if( t != null )
+                Armor.Add( t );
             Blunt = 0;
             Sharp = 0;
             Heat = 0;
@@ -86,7 +87,7 @@ namespace WRS
             DefensiveStatsRect = new Rect( OffensiveStatsRect.x + OffensiveStatsRect.width + 10, ColonistRect.y,
                 OffensiveStatsRect.width, ColonistRect.height );
             AvailableEquipmentRect = new Rect( ColonistRect.x, ColonistRect.y + ColonistRect.height + 10,
-                rect.width - ( ColonistRect.x * 2 ), rect.height - ColonistRect.y + ColonistRect.height + 10 );
+                rect.width, rect.height - ColonistSelection.height - ColonistRect.height - 10 - 5);
 
             SetActiveEquipment();
             GenerateColonistSelectionBar();
@@ -307,15 +308,21 @@ namespace WRS
             return new Rect( x + ( DefensiveStatsRect.width / 3 ) - 60f, y, 60f, LabelSpacing );
         }
 
-        public void PrintThingIcons( Rect rect, List< Thing > thingList )
+        public void PrintThingIcons( Rect rect, List<Thing> thingList )
         {
             float xLoc = rect.x;
             float size = 20f;
 
-            foreach( var item in thingList )
+            if( thingList != null )
             {
-                Widgets.ThingIcon( new Rect( xLoc, rect.y, size, size ), item, 1f );
-                xLoc += size + 1;
+                foreach( var item in thingList )
+                {
+                    if( item != null )
+                    {
+                        Widgets.ThingIcon( new Rect( xLoc, rect.y, size, size ), item, 1f );
+                        xLoc += size + 1;
+                    }
+                }
             }
         }
 
@@ -354,6 +361,7 @@ namespace WRS
             isRangeMeleeMix = false;
             ArmorValues tmp = new ArmorValues();
 
+                        Log.Message(" 2 ");
             foreach( var curApparel in ActivePawn.apparel.WornApparel )
             {
                 foreach( var part in curApparel.def.apparel.bodyPartGroups )
@@ -361,6 +369,7 @@ namespace WRS
                     found = false;
                     for( var i = 0; !found && i < individualParts.Count(); i++ )
                     {
+                        Log.Message(" 1 ");
                         if( individualParts[ i ].First.defName == part.defName )
                         {
                             tmp = individualParts[ i ].Second;
@@ -388,7 +397,8 @@ namespace WRS
                     }
                     if( !found )
                     {
-                        tmp = new ArmorValues();
+                        Log.Message(" 4 ");
+                        tmp = new ArmorValues( null );
                         tmp.Blunt = Mathf.Clamp01( curApparel.GetStatValue( StatDefOf.ArmorRating_Blunt, true ) );
                         tmp.Sharp = Mathf.Clamp01( curApparel.GetStatValue( StatDefOf.ArmorRating_Sharp, true ) );
                         tmp.Heat = Mathf.Clamp01( curApparel.GetStatValue( StatDefOf.ArmorRating_Heat, true ) );
@@ -400,6 +410,7 @@ namespace WRS
                             individualPartsProjected.Add( new Pair<BodyPartGroupDef, ArmorValues>( part, tmp ) );
                         else
                             individualPartsProjected.Add( new Pair<BodyPartGroupDef, ArmorValues>( part, new ArmorValues( curApparel ) ) );
+                        Log.Message( " 5 " );
                     }
                 }
 
@@ -432,7 +443,7 @@ namespace WRS
                         tmp.Electric = Mathf.Clamp01( ProjectedItem.GetStatValue( StatDefOf.ArmorRating_Electric, true ) );
 
                         individualPartsProjected.Add( new Pair<BodyPartGroupDef, ArmorValues>( ProjectedItem.def.apparel.bodyPartGroups[ i ], tmp ) );
-                        individualParts.Add( new Pair<BodyPartGroupDef, ArmorValues>( ProjectedItem.def.apparel.bodyPartGroups[ i ], new ArmorValues()) );
+                        individualParts.Add( new Pair<BodyPartGroupDef, ArmorValues>( ProjectedItem.def.apparel.bodyPartGroups[ i ], new ArmorValues(  null )) );
                     }
 
                 }
@@ -442,15 +453,15 @@ namespace WRS
             for( int i = 0; i < individualParts.Count; i++ )
             {
                 GUI.contentColor = new Color( 0.8f, 0.8f, 0.8f, 1f );
-                Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 3, LabelSpacing ), ""/*.Translate()*/ + individualParts[ i ].First.LabelCap );
+                Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 2, LabelSpacing ), ""/*.Translate()*/ + individualParts[ i ].First.LabelCap );
                 y += LabelSpacing;
                 GUI.contentColor = Color.white;
 
                 if( individualParts[ i ].Second.Blunt > .0005 || individualPartsProjected[ i ].Second.Blunt > .0005 )
                 {
-                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 3, LabelSpacing ), "Blunt" );
+                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 2, LabelSpacing ), "Blunt" );
                     PrintActiveStat( PrintRectActiveDefensive(), individualParts[ i ].Second.Blunt, true );
-                    PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
+                    PrintThingIcons( PrintRectProjDefensive(), individualPartsProjected[ i ].Second.Armor );
                     PrintProjectedStat( PrintRectProjDefensive(), individualParts[ i ].Second.Blunt, individualPartsProjected[ i ].Second.Blunt, false, true );
                     y += LabelSpacing;
                 }
@@ -458,14 +469,14 @@ namespace WRS
                 if( y >= DefensiveStatsRect.height )
                 {
                     y = yTmp;
-                    x += DefensiveStatsRect.width / 3 + 10;
+                    x += DefensiveStatsRect.width / 2 + 10;
                 }
 
                 if( individualParts[ i ].Second.Sharp > .0005 || individualPartsProjected[ i ].Second.Sharp > .0005 )
                 {
-                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 3, LabelSpacing ), "Sharp" );
+                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 2, LabelSpacing ), "Sharp" );
                     PrintActiveStat( PrintRectActiveDefensive(), individualParts[ i ].Second.Sharp, true );
-                    PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
+                    PrintThingIcons( PrintRectProjDefensive(), individualPartsProjected[ i ].Second.Armor );
                     PrintProjectedStat( PrintRectProjDefensive(), individualParts[ i ].Second.Sharp, individualPartsProjected[ i ].Second.Sharp, false, true );
                     y += LabelSpacing;
                 }
@@ -473,14 +484,14 @@ namespace WRS
                 if( y >= DefensiveStatsRect.height )
                 {
                     y = yTmp;
-                    x += DefensiveStatsRect.width / 3 + 10;
+                    x += DefensiveStatsRect.width / 2 + 10;
                 }
 
                 if( individualParts[ i ].Second.Heat > .0005 || individualPartsProjected[ i ].Second.Heat > .0005 )
                 {
-                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 3, LabelSpacing ), "Heat" );
+                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 2, LabelSpacing ), "Heat" );
                     PrintActiveStat( PrintRectActiveDefensive(), individualParts[ i ].Second.Heat, true );
-                    //PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
+                    PrintThingIcons( PrintRectProjDefensive(), individualPartsProjected[ i ].Second.Armor );
                     PrintProjectedStat( PrintRectProjDefensive(), individualParts[ i ].Second.Heat, individualPartsProjected[ i ].Second.Heat, false, true );
                     y += LabelSpacing;
                 }
@@ -488,14 +499,14 @@ namespace WRS
                 if( y >= DefensiveStatsRect.height )
                 {
                     y = yTmp;
-                    x += DefensiveStatsRect.width / 3 + 10;
+                    x += DefensiveStatsRect.width / 2 + 10;
                 }
 
                 if( individualParts[ i ].Second.Electric> .0005 || individualPartsProjected[ i ].Second.Electric > .0005 )
                 {
-                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 3, LabelSpacing ), "Electric" );
+                    Widgets.Label( new Rect( x, y, DefensiveStatsRect.width / 2, LabelSpacing ), "Electric" );
                     PrintActiveStat( PrintRectActiveDefensive(), individualParts[ i ].Second.Electric, true );
-                    //PrintThingIcons( PrintRectActiveDefensive(), individualPartsProjected[ i ].Second.Armor );
+                    PrintThingIcons( PrintRectProjDefensive(), individualPartsProjected[ i ].Second.Armor );
                     PrintProjectedStat( PrintRectProjDefensive(), individualParts[ i ].Second.Electric, individualPartsProjected[ i ].Second.Electric, false, true );
                     y += LabelSpacing;
                 }
@@ -503,7 +514,7 @@ namespace WRS
                 if( y >= DefensiveStatsRect.height )
                 {
                     y = yTmp;
-                    x += DefensiveStatsRect.width / 3 + 10;
+                    x += DefensiveStatsRect.width / 2 + 10;
                 }
 
             }
@@ -525,12 +536,14 @@ namespace WRS
             List<Thing> availableEquipment = new List<Thing>();
             availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Weapon ) );
             availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Apparel ) );
+            availableEquipment.Select( x => x.def.defName ).Distinct();
 
             GUI.BeginGroup( AvailableEquipmentRect );
             x = 0f;
             y = 0f;
 
-            CreateStorageBoxList( new Rect( 0, 0, AvailableEquipmentRect.width, AvailableEquipmentRect.height ), availableEquipment );
+            CreateStorageBoxList( new Rect( 0, 0, AvailableEquipmentRect.width, AvailableEquipmentRect.height ),
+            availableEquipment.Distinct();
             //foreach( var l in list )
             //{
             //    y += LabelSpacing; ;
@@ -539,29 +552,33 @@ namespace WRS
             GUI.EndGroup();
         }
 
-        public void CreateStorageBoxList( Rect storage, List<Thing> storageList )
+        public void CreateStorageBoxList( Rect storage, IEnumerable<string>
         {
             float height = 80f;
             float width = 80f;
-            int columns = Mathf.FloorToInt( storage.width / width );
+            int columns = Mathf.FloorToInt( ( storage.width - 21 ) / width );
             int rows = Mathf.CeilToInt( storageList.Count() / ( columns != 0 ? columns : 1 ) );
 
             Rect currentBox = new Rect();
-            Rect scrollingRect = new Rect( 5, 5, storage.width - 21f, ( height * rows < storage.height ? storage.height + 50f : height * rows ) );
+            Rect scrollingRect = new Rect( 0, 0, storage.width - 21, ( height * rows < storage.height ? storage.height : height * rows ) );
 
             Log.Message( " rec " + scrollingRect.height + " rows: " + rows );
-            Widgets.BeginScrollView( storage, ref scrollPosition, scrollingRect );
+            Widgets.DrawLineHorizontal( 2f, 0f, storage.width - 4f );
+            y += 3f;
+            storage.y = y;
+
+            Widgets.BeginScrollView( new Rect( storage ), ref scrollPosition, scrollingRect );
 
             x = scrollingRect.x;
             foreach( var s in storageList )
             {
                 currentBox = new Rect( x, y, height, width );
                 CreateStorageBox( currentBox, s, true );
-                x += width;
+                x += width + 2;
                 if( x + width >= scrollingRect.width )
                 {
                     x = scrollingRect.x;
-                    y += height;
+                    y += height + 2;
                     if( y >= scrollingRect.height )
                     {
                         // Out of room
