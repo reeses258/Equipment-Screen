@@ -26,6 +26,26 @@ namespace WRS
         public float Electric;
         public List< Thing > Armor;
     }
+
+    class ThingComparer : IEqualityComparer<Thing>
+    {
+        public bool Equals( Thing t1, Thing t2 )
+        {
+            if( t1.def.defName != t2.def.defName )
+                return false;
+
+            var quality1 = QualityCategory.Awful;
+            var quality2 = QualityCategory.Awful;
+            if( t1.TryGetQuality( out quality1 ) != t2.TryGetQuality( out quality2 ) )
+                return false;
+            return true;
+        }
+        public int GetHashCode( Thing t1 )
+        {
+            return t1.GetHashCode();
+        }
+    }
+
     public class EquipmentTab : MainTabWindow_PawnList
     {
         public override Vector2 RequestedTabSize => new Vector2( 1200f, 800f );
@@ -536,14 +556,13 @@ namespace WRS
             List<Thing> availableEquipment = new List<Thing>();
             availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Weapon ) );
             availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Apparel ) );
-            availableEquipment.Select( x => x.def.defName ).Distinct();
 
             GUI.BeginGroup( AvailableEquipmentRect );
             x = 0f;
             y = 0f;
 
             CreateStorageBoxList( new Rect( 0, 0, AvailableEquipmentRect.width, AvailableEquipmentRect.height ),
-            availableEquipment.Distinct();
+            availableEquipment.Distinct( new ThingComparer() ).ToList() );
             //foreach( var l in list )
             //{
             //    y += LabelSpacing; ;
@@ -552,7 +571,7 @@ namespace WRS
             GUI.EndGroup();
         }
 
-        public void CreateStorageBoxList( Rect storage, IEnumerable<string>
+        public void CreateStorageBoxList( Rect storage, List<Thing> storageList )
         {
             float height = 80f;
             float width = 80f;
