@@ -85,6 +85,10 @@ namespace WRS
         private bool isProjected = false;
         private Vector2 scollPosition = Vector2.zero;
 
+        private bool ShowWeapons = true;
+        private bool ShowApparel = true;
+        private bool ShowDuplicates = false;
+
         // Use default for now.
         protected override void BuildPawnList()
         {
@@ -104,6 +108,19 @@ namespace WRS
             CalculatedAvailableEquipment.Clear();
             ProjectedItem = null;
             ActivePawn = null;
+        }
+
+        public void OutlineRect( ref Rect rectToOutline )
+        {
+            Widgets.DrawLineHorizontal( rectToOutline.x, rectToOutline.y, rectToOutline.width );
+            Widgets.DrawLineHorizontal( rectToOutline.x, rectToOutline.y + rectToOutline.height, rectToOutline.width );
+            Widgets.DrawLineVertical( rectToOutline.x, rectToOutline.y, rectToOutline.height );
+            Widgets.DrawLineVertical( rectToOutline.x + rectToOutline.width - 1f, rectToOutline.y, rectToOutline.height );
+
+            rectToOutline.x += 3;
+            rectToOutline.y += 3;
+            rectToOutline.width -= 6;
+            rectToOutline.height -= 6;
         }
 
         public void SetInitialWindowSettings()
@@ -567,6 +584,26 @@ namespace WRS
             GUI.EndGroup();
         }
 
+        public void ProcessAvailableEquipmentSettings()
+        {
+            bool tmp = ShowWeapons;
+            Widgets.CheckboxLabeled( new Rect( 0f, 0f, 120f, 24f ), "Weapons", ref ShowWeapons);
+            if( tmp != ShowWeapons )
+                CalculatedAvailableEquipment.Clear();
+
+            tmp = ShowApparel;
+            Widgets.CheckboxLabeled( new Rect( 0f, 24f, 120f, 24f ), "Apparel", ref ShowApparel);
+            if( tmp != ShowApparel)
+                CalculatedAvailableEquipment.Clear();
+
+            tmp = ShowDuplicates;
+            Widgets.CheckboxLabeled( new Rect( 0f, 48f, 120f, 24f ), "Duplicates", ref ShowDuplicates);
+            if( tmp != ShowDuplicates)
+                CalculatedAvailableEquipment.Clear();
+            
+            x += 123f;
+        }
+
         public void CalculateEquipment()
         {
             if( CalculatedAvailableEquipment.Count > 0 )
@@ -575,12 +612,14 @@ namespace WRS
             List<Thing> availableEquipment = new List<Thing>();
             ThingComparer itemComparer = new ThingComparer();
 
-            availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Weapon ) );
-            availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Apparel ) );
+            if( ShowWeapons )
+                availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Weapon ) );
+            if( ShowApparel)
+                availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Apparel ) );
 
             foreach( var item in availableEquipment )
             {
-               // if( !CalculatedAvailableEquipment.Contains( item, itemComparer ) )
+                if( ShowDuplicates || !CalculatedAvailableEquipment.Contains( item, itemComparer ) )
                 {
                     CalculatedAvailableEquipment.Add( item );
                 }
@@ -592,19 +631,17 @@ namespace WRS
             if( ActivePawn == null )
                 return;
 
-            CalculateEquipment();
-
+            OutlineRect( ref AvailableEquipmentRect );
             GUI.BeginGroup( AvailableEquipmentRect );
             x = 0f;
             y = 0f;
 
-            CreateStorageBoxList( new Rect( 0, 0, AvailableEquipmentRect.width, AvailableEquipmentRect.height ),
+            ProcessAvailableEquipmentSettings();
+            CalculateEquipment();
+
+            CreateStorageBoxList( new Rect( x, y, AvailableEquipmentRect.width, AvailableEquipmentRect.height ),
                 CalculatedAvailableEquipment );
-            //foreach( var l in list )
-            //{
-            //    y += LabelSpacing; ;
-            //    Widgets.Label( new Rect( x, y, 100f, LabelSpacing ), l.ToString() );
-            //}
+
             GUI.EndGroup();
         }
 
@@ -618,8 +655,6 @@ namespace WRS
             Rect currentBox = new Rect();
             Rect scrollingRect = new Rect( 0, 0, storage.width - 21, ( height * rows < storage.height ? storage.height : height * rows ) + 50f );
 
-            Widgets.DrawLineHorizontal( 2f, 0f, storage.width - 4f );
-            y += 3f;
             storage.y = y;
 
             Widgets.BeginScrollView( new Rect( storage ), ref scrollPosition, scrollingRect );
