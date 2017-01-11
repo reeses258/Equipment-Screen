@@ -32,16 +32,24 @@ namespace WRS
         public bool Equals( Thing t1, Thing t2 )
         {
             if( t1.def.defName != t2.def.defName )
+            {
+                Log.Message( t1.def.defName + " False " + t2.def.defName );
                 return false;
+            }
 
             var quality1 = QualityCategory.Awful;
             var quality2 = QualityCategory.Awful;
             if( t1.TryGetQuality( out quality1 ) != t2.TryGetQuality( out quality2 ) )
+            {
+                Log.Message( t1.def.defName + " False2 " + t2.def.defName );
                 return false;
+            }
+            Log.Message( t1.def.defName + " true " + t2.def.defName );
             return true;
         }
         public int GetHashCode( Thing t1 )
         {
+            Log.Message( "Hash " + t1.def.defName + " " + t1.GetHashCode() );
             return t1.GetHashCode();
         }
     }
@@ -59,6 +67,7 @@ namespace WRS
         private static List<Thing> ActiveShellApparel = new List<Thing>();
         private static List<Thing> ActiveMiddleApparel = new List<Thing>();
         private static List<Thing> ActiveAcessory = new List<Thing>();
+        private static List<Thing> CalculatedAvailableEquipment = new List<Thing>();
         private static Thing ProjectedItem;
 
         private static float LabelSpacing = 25f;
@@ -81,6 +90,20 @@ namespace WRS
         {
             pawns.Clear();
             pawns.AddRange( Find.VisibleMap.mapPawns.FreeColonists );
+        }
+
+        public override void PreOpen()
+        {
+            base.PreOpen();
+            ActivePawn = Find.Selector.SingleSelectedThing as Pawn;
+        }
+
+        public override void PostClose()
+        {
+            base.PostClose();
+            CalculatedAvailableEquipment.Clear();
+            ProjectedItem = null;
+            ActivePawn = null;
         }
 
         public void SetInitialWindowSettings()
@@ -107,7 +130,7 @@ namespace WRS
             DefensiveStatsRect = new Rect( OffensiveStatsRect.x + OffensiveStatsRect.width + 10, ColonistRect.y,
                 OffensiveStatsRect.width, ColonistRect.height );
             AvailableEquipmentRect = new Rect( ColonistRect.x, ColonistRect.y + ColonistRect.height + 10,
-                rect.width, rect.height - ColonistSelection.height - ColonistRect.height - 10 - 5);
+                rect.width, rect.height - DefensiveStatsRect.height - DefensiveStatsRect.y - 10 - 5);
 
             SetActiveEquipment();
             GenerateColonistSelectionBar();
@@ -381,7 +404,6 @@ namespace WRS
             isRangeMeleeMix = false;
             ArmorValues tmp = new ArmorValues();
 
-                        Log.Message(" 2 ");
             foreach( var curApparel in ActivePawn.apparel.WornApparel )
             {
                 foreach( var part in curApparel.def.apparel.bodyPartGroups )
@@ -389,7 +411,6 @@ namespace WRS
                     found = false;
                     for( var i = 0; !found && i < individualParts.Count(); i++ )
                     {
-                        Log.Message(" 1 ");
                         if( individualParts[ i ].First.defName == part.defName )
                         {
                             tmp = individualParts[ i ].Second;
@@ -417,7 +438,6 @@ namespace WRS
                     }
                     if( !found )
                     {
-                        Log.Message(" 4 ");
                         tmp = new ArmorValues( null );
                         tmp.Blunt = Mathf.Clamp01( curApparel.GetStatValue( StatDefOf.ArmorRating_Blunt, true ) );
                         tmp.Sharp = Mathf.Clamp01( curApparel.GetStatValue( StatDefOf.ArmorRating_Sharp, true ) );
@@ -430,7 +450,6 @@ namespace WRS
                             individualPartsProjected.Add( new Pair<BodyPartGroupDef, ArmorValues>( part, tmp ) );
                         else
                             individualPartsProjected.Add( new Pair<BodyPartGroupDef, ArmorValues>( part, new ArmorValues( curApparel ) ) );
-                        Log.Message( " 5 " );
                     }
                 }
 
@@ -548,21 +567,39 @@ namespace WRS
             GUI.EndGroup();
         }
 
+        public void CalculateEquipment()
+        {
+            if( CalculatedAvailableEquipment.Count > 0 )
+                return;
+
+            List<Thing> availableEquipment = new List<Thing>();
+            ThingComparer itemComparer = new ThingComparer();
+
+            availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Weapon ) );
+            availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Apparel ) );
+
+            foreach( var item in availableEquipment )
+            {
+               // if( !CalculatedAvailableEquipment.Contains( item, itemComparer ) )
+                {
+                    CalculatedAvailableEquipment.Add( item );
+                }
+            }
+        }
+
         public void GenerateAvailableEquipement()
         {
             if( ActivePawn == null )
                 return;
 
-            List<Thing> availableEquipment = new List<Thing>();
-            availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Weapon ) );
-            availableEquipment.AddRange( ActivePawn.Map.listerThings.ThingsInGroup( ThingRequestGroup.Apparel ) );
+            CalculateEquipment();
 
             GUI.BeginGroup( AvailableEquipmentRect );
             x = 0f;
             y = 0f;
 
             CreateStorageBoxList( new Rect( 0, 0, AvailableEquipmentRect.width, AvailableEquipmentRect.height ),
-            availableEquipment.Distinct( new ThingComparer() ).ToList() );
+                CalculatedAvailableEquipment );
             //foreach( var l in list )
             //{
             //    y += LabelSpacing; ;
@@ -576,12 +613,11 @@ namespace WRS
             float height = 80f;
             float width = 80f;
             int columns = Mathf.FloorToInt( ( storage.width - 21 ) / width );
-            int rows = Mathf.CeilToInt( storageList.Count() / ( columns != 0 ? columns : 1 ) );
+            int rows = Mathf.CeilToInt( (float) storageList.Count() / (float) ( columns != 0 ? columns : 1 ) );
 
             Rect currentBox = new Rect();
-            Rect scrollingRect = new Rect( 0, 0, storage.width - 21, ( height * rows < storage.height ? storage.height : height * rows ) );
+            Rect scrollingRect = new Rect( 0, 0, storage.width - 21, ( height * rows < storage.height ? storage.height : height * rows ) + 50f );
 
-            Log.Message( " rec " + scrollingRect.height + " rows: " + rows );
             Widgets.DrawLineHorizontal( 2f, 0f, storage.width - 4f );
             y += 3f;
             storage.y = y;
