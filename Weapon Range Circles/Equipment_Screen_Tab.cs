@@ -58,6 +58,11 @@ namespace WRS
     {
         public override Vector2 RequestedTabSize => new Vector2( 1200f, 800f );
 
+        public static readonly Texture2D DamageTextureGreen = ContentFinder<Texture2D>.Get("UI/Icons/DamageGreen");
+        public static readonly Texture2D DamageTextureRed= ContentFinder<Texture2D>.Get("UI/Icons/DamageRed");
+        public static readonly Texture2D AccuracyTextureGreen = ContentFinder<Texture2D>.Get("UI/Icons/AccuracyGreen");
+        public static readonly Texture2D AccuracyTextureRed = ContentFinder<Texture2D>.Get("UI/Icons/AccuracyRed");
+
         private static Vector2 PawnTextureRatio = new Vector2( 46f, 72f );
 
         private static Pawn ActivePawn = null;
@@ -687,6 +692,8 @@ namespace WRS
             {
                 Widgets.ThingIcon( storageBox, item, 1f );
                 GUI.Box( storageBox, item.LabelCap );
+                if( activateMouse )
+                    CreateAttributeTextures( storageBox, item );
             }
             else
             {
@@ -715,6 +722,43 @@ namespace WRS
             }
             //CreateCompareItemLabelToolTip( item );
             //TooltipHandler.TipRegion( storageBox, "DropThing".Translate() );
+        }
+        public void CreateAttributeTextures( Rect storageBox, Thing item )
+        {
+            float itemVal;
+            float activeVal;
+            if( item.def.IsRangedWeapon )
+            {
+                itemVal = Equipment_Ranged_Calculators.AverageDPS( item );
+                activeVal = Equipment_Ranged_Calculators.AverageDPS( ActiveWeapon.First() );
+                if( itemVal > activeVal )
+                {
+                    // Green damage texture
+                }
+                else if( itemVal < activeVal )
+                {
+                    // Red Damage texture
+                }
+
+                itemVal = Equipment_Ranged_Calculators.AverageAccuracy( item );
+                activeVal = Equipment_Ranged_Calculators.AverageAccuracy( item );
+                if( itemVal > activeVal )
+                {
+                    // Green Accuracy texture
+                }
+                else if( itemVal < activeVal )
+                {
+                    // Red Accuracy texture
+                }
+            }
+            else if( item.def.IsApparel )
+            {
+
+            }
+            else if( item.def.IsMeleeWeapon )
+            {
+
+            }
         }
 
         public bool SetGuiColorForDetails( float active, float project )

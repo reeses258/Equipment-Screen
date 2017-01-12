@@ -58,6 +58,15 @@ namespace WRS
             return d.GetStatValue( StatDefOf.AccuracyLong, true );
         }
 
+        public static float AverageAccuracy( Thing d )
+        {
+            float num = 0f;
+            num += AccuracyShort( d );
+            num += AccuracyMedium( d );
+            num += AccuracyLong( d );
+            return num / 3;
+        }
+
         public static float AverageDPS( Thing d )
         {
             float num = 0f;
