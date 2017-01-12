@@ -33,7 +33,6 @@ namespace WRS
         {
             if( t1.def.defName != t2.def.defName )
             {
-                Log.Message( t1.def.defName + " False " + t2.def.defName );
                 return false;
             }
 
@@ -41,15 +40,12 @@ namespace WRS
             var quality2 = QualityCategory.Awful;
             if( t1.TryGetQuality( out quality1 ) != t2.TryGetQuality( out quality2 ) )
             {
-                Log.Message( t1.def.defName + " False2 " + t2.def.defName );
                 return false;
             }
-            Log.Message( t1.def.defName + " true " + t2.def.defName );
             return true;
         }
         public int GetHashCode( Thing t1 )
         {
-            Log.Message( "Hash " + t1.def.defName + " " + t1.GetHashCode() );
             return t1.GetHashCode();
         }
     }
@@ -727,46 +723,99 @@ namespace WRS
         {
             float itemVal;
             float activeVal;
-            if( item.def.IsRangedWeapon )
+            float texSize = 20f;
+            float localX = 0;
+
+            if( ActiveWeapon.Count == 0 )
+                return;
+
+            if( item.def.IsRangedWeapon && ActiveWeapon[0].def.IsRangedWeapon )
             {
                 itemVal = Equipment_Ranged_Calculators.AverageDPS( item );
-                activeVal = Equipment_Ranged_Calculators.AverageDPS( ActiveWeapon.First() );
+                activeVal = Equipment_Ranged_Calculators.AverageDPS( ActiveWeapon[ 0 ] );
                 if( itemVal > activeVal )
                 {
                     // Green damage texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f, storageBox.y + 1, texSize, texSize ), DamageTextureGreen );
+                    localX += texSize + 1;
+
                 }
                 else if( itemVal < activeVal )
                 {
                     // Red Damage texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f, storageBox.y + 1, texSize, texSize ), DamageTextureRed );
+                    localX += texSize + 1;
                 }
 
                 itemVal = Equipment_Ranged_Calculators.AverageAccuracy( item );
-                activeVal = Equipment_Ranged_Calculators.AverageAccuracy( item );
+                activeVal = Equipment_Ranged_Calculators.AverageAccuracy( ActiveWeapon[ 0 ] );
                 if( itemVal > activeVal )
                 {
                     // Green Accuracy texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f - localX, storageBox.y + 1, texSize, texSize ), AccuracyTextureGreen );
+                    localX += texSize + 1;
                 }
                 else if( itemVal < activeVal )
                 {
                     // Red Accuracy texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f - localX, storageBox.y + 1, texSize, texSize ), AccuracyTextureRed );
+                    localX += texSize + 1;
                 }
             }
             else if( item.def.IsApparel )
             {
 
             }
-            else if( item.def.IsMeleeWeapon )
+            else if( item.def.IsMeleeWeapon && ActiveWeapon[ 0 ].def.IsMeleeWeapon )
             {
+                itemVal = Equipment_Melee_Calculators.DPS( ActivePawn, item );
+                activeVal = Equipment_Melee_Calculators.DPS( ActivePawn, ActiveWeapon[ 0 ] );
+                if( itemVal > activeVal )
+                {
+                    // Green damage texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f, storageBox.y + 1, texSize, texSize ), DamageTextureGreen );
+                    localX += texSize + 1;
 
+                }
+                else if( itemVal < activeVal )
+                {
+                    // Red Damage texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f, storageBox.y + 1, texSize, texSize ), DamageTextureRed );
+                    localX += texSize + 1;
+                }
+
+                itemVal = Equipment_Melee_Calculators.Cooldown( item );
+                activeVal = Equipment_Melee_Calculators.Cooldown( ActiveWeapon[ 0 ] );
+                if( itemVal > activeVal )
+                {
+                    // Green damage texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f - localX, storageBox.y + 1, texSize, texSize ), AccuracyTextureGreen );
+                    localX += texSize + 1;
+
+                }
+                else if( itemVal < activeVal )
+                {
+                    // Red Damage texture
+                    GUI.DrawTexture( new Rect( storageBox.x + storageBox.width - texSize - 1f - localX, storageBox.y + 1, texSize, texSize ), AccuracyTextureRed );
+                    localX += texSize + 1;
+                }
             }
         }
 
         public bool SetGuiColorForDetails( float active, float project )
         {
             if( active > project )
+            {
+                if( project * 1.1 > active )
+                    GUI.contentColor = Color.yellow;
                 GUI.contentColor = Color.red;
+            }
             else if( active < project )
+            {
+                if( active * 1.1 > project)
+                    GUI.contentColor = Color.yellow;
                 GUI.contentColor = Color.green;
+            }
             else
                 return false;
             return true;
