@@ -27,29 +27,6 @@ namespace WRS
         public List< Thing > Armor;
     }
 
-    class ThingComparer : IEqualityComparer<Thing>
-    {
-        public bool Equals( Thing t1, Thing t2 )
-        {
-            if( t1.def.defName != t2.def.defName )
-            {
-                return false;
-            }
-
-            var quality1 = QualityCategory.Awful;
-            var quality2 = QualityCategory.Awful;
-            if( t1.TryGetQuality( out quality1 ) != t2.TryGetQuality( out quality2 ) )
-            {
-                return false;
-            }
-            return true;
-        }
-        public int GetHashCode( Thing t1 )
-        {
-            return t1.GetHashCode();
-        }
-    }
-
     public class EquipmentTab : MainTabWindow_PawnList
     {
         public override Vector2 RequestedTabSize => new Vector2( 1200f, 800f );
@@ -72,6 +49,7 @@ namespace WRS
         private static Thing ProjectedItem;
 
         private static float LabelSpacing = 25f;
+        private static float ArrowSize = 25f;
 
         private Rect ColonistSelection = new Rect();
         private Rect ColonistRect = new Rect();
@@ -138,17 +116,17 @@ namespace WRS
             SetInitialWindowSettings();
 
             // Initialize View Rects
-            ColonistSelection = new Rect( 0f, 0f, rect.width, 35f );
+            ColonistSelection = new Rect( 0f, 0f, 150f, 35f );
 
-            ColonistRect = new Rect( 0f, ColonistSelection.height, rect.width / 3, rect.height / 1.5f );
+            ColonistRect = new Rect( ColonistSelection.width, 0f, 50f, ColonistSelection.height );
             ColonistRect.width = ColonistRect.height * PawnTextureRatio[ 0 ] / PawnTextureRatio[ 1 ];
 
-            OffensiveStatsRect = new Rect( ColonistRect.x + ColonistRect.width + 10, ColonistRect.y,
-                ( rect.width - ( ColonistRect.x + ColonistRect.width + 10 ) ) / 2, ColonistRect.height );
-            DefensiveStatsRect = new Rect( OffensiveStatsRect.x + OffensiveStatsRect.width + 10, ColonistRect.y,
-                OffensiveStatsRect.width, ColonistRect.height );
-            AvailableEquipmentRect = new Rect( ColonistRect.x, ColonistRect.y + ColonistRect.height + 10,
-                rect.width, rect.height - DefensiveStatsRect.height - DefensiveStatsRect.y - 10 - 5);
+            OffensiveStatsRect = new Rect( ColonistRect.x + ColonistRect.width, ColonistRect.y,
+                ( rect.width - ( ColonistRect.width + ColonistSelection.width ) ) / 2, rect.height * 3/4 );
+            DefensiveStatsRect = new Rect( OffensiveStatsRect.x + OffensiveStatsRect.width, ColonistRect.y,
+                OffensiveStatsRect.width, OffensiveStatsRect.height );
+            AvailableEquipmentRect = new Rect( 0f, OffensiveStatsRect.y + OffensiveStatsRect.height,
+                rect.width, rect.height - OffensiveStatsRect.height - OffensiveStatsRect.y );
 
             SetActiveEquipment();
             GenerateColonistSelectionBar();
@@ -194,7 +172,7 @@ namespace WRS
         {
             GUI.BeginGroup( ColonistSelection );
 
-            if( Widgets.ButtonImage( new Rect( ColonistSelection.width / 2f - 100f - 40f, 0f, 35f, 35f ), TexUI.ArrowTexLeft ) )
+            if( Widgets.ButtonImage( new Rect( 3f, 0f, ArrowSize, ArrowSize ), TexUI.ArrowTexLeft ) )
             {
                 Pawn oldP = pawns[ 0 ];
                 bool found = false;
@@ -204,7 +182,6 @@ namespace WRS
                     ActivePawn = pawns[ pawns.Count - 1 ];
                     found = true;
                 }
-
 
                 foreach( var p in pawns )
                 {
@@ -221,7 +198,7 @@ namespace WRS
                 }
             }
 
-            var colonistSelector = new Rect( ColonistSelection.width / 2f - 100f, 0f, 200f, 35f );
+            var colonistSelector = new Rect( ArrowSize + 5f + 3f, 0f, 80f, ArrowSize );
             if( ActivePawn == null )
             {
                 if( Widgets.ButtonText( colonistSelector, "Colonists" ) )
@@ -237,7 +214,7 @@ namespace WRS
                 }
             }
 
-            if( Widgets.ButtonImage( new Rect( ColonistSelection.width / 2f + 100f + 5f, 0f, 35f, 35f ), TexUI.ArrowTexRight ) )
+            if( Widgets.ButtonImage( new Rect( colonistSelector.x + colonistSelector.width + 5f, 0f, ArrowSize, ArrowSize ), TexUI.ArrowTexRight ) )
             {
                 bool next = false;
                 bool found = false;
@@ -588,21 +565,22 @@ namespace WRS
         public void ProcessAvailableEquipmentSettings()
         {
             bool tmp = ShowWeapons;
-            Widgets.CheckboxLabeled( new Rect( 0f, 0f, 120f, 24f ), "Weapons", ref ShowWeapons);
+            float checkBoxSize = 150f;
+            Widgets.CheckboxLabeled( new Rect( 0f, 0f, checkBoxSize, 24f ), "Weapons", ref ShowWeapons);
             if( tmp != ShowWeapons )
                 CalculatedAvailableEquipment.Clear();
 
             tmp = ShowApparel;
-            Widgets.CheckboxLabeled( new Rect( 0f, 24f, 120f, 24f ), "Apparel", ref ShowApparel);
+            Widgets.CheckboxLabeled( new Rect( 0f, 24f, checkBoxSize, 24f ), "Apparel", ref ShowApparel);
             if( tmp != ShowApparel)
                 CalculatedAvailableEquipment.Clear();
 
             tmp = ShowDuplicates;
-            Widgets.CheckboxLabeled( new Rect( 0f, 48f, 120f, 24f ), "Duplicates", ref ShowDuplicates);
+            Widgets.CheckboxLabeled( new Rect( 0f, 48f, checkBoxSize, 24f ), "Duplicates", ref ShowDuplicates);
             if( tmp != ShowDuplicates)
                 CalculatedAvailableEquipment.Clear();
             
-            x += 123f;
+            x += checkBoxSize + 3f;
         }
 
         public void CalculateEquipment()
